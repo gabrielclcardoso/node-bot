@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import Application, ContextTypes, CommandHandler
 import logging
+from textwrap import dedent
 
 import constants as const
 import mixnet_query as mx_query
@@ -11,60 +12,105 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-JOBS = []
+MIXNODES = []
+GATEWAYS = []
 
 
 def main():
     application = Application.builder().token(const.TOKEN).build()
 
-    job_handler = CommandHandler('add', add_job)
-    mixnode_handler = CommandHandler('mixscore', mixnode_score)
-    gateway_handler = CommandHandler('gatescore', gateway_score)
+    add_mixnode_handler = CommandHandler('addmix', add_mixnode)
+    del_mixnode_handler = CommandHandler('delmix', del_mixnode)
+    add_gateway_handler = CommandHandler('addgate', add_gateway)
+    del_gateway_handler = CommandHandler('delgate', del_gateway)
 
-    application.add_handler(job_handler)
-    application.add_handler(mixnode_handler)
-    application.add_handler(gateway_handler)
+    application.add_handler(add_mixnode_handler)
+    application.add_handler(del_mixnode_handler)
+    application.add_handler(add_gateway_handler)
+    application.add_handler(del_gateway_handler)
 
     job_queue = application.job_queue
-    job_queue.run_repeating(print_jobs, interval=5)
+    job_queue.run_repeating(report_nodes, interval=5)
 
     application.run_polling()
 
 
-async def gateway_score(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    for gateway in context.args:
-        try:
-            score = mx_query.get_node_score(gateway, "gateway")
-            await context.bot.send_message(chat_id=const.CHAT_ID, text=score)
-        except Exception as e:
-            msg = f'Error fetching score of gateway {gateway}:\n\n{e}'
-            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
-
-
-async def mixnode_score(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    for mixnode in context.args:
-        try:
-            score = mx_query.get_node_score(mixnode, "mixnode")
-            await context.bot.send_message(chat_id=const.CHAT_ID, text=score)
-        except Exception as e:
-            msg = f'Error fetching score of mixnode {mixnode}:\n\n{e}'
-            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
-
-
-async def add_job(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != const.CHAT_ID:
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Unauthorized")
 
-    for job in context.args:
-        JOBS.append(job)
-        await context.bot.send_message(chat_id=const.CHAT_ID,
-                                       text=f'added {job}')
+    for mixnode in context.args:
+        if mx_query.node_exists(mixnode, 'mixnode'):
+            MIXNODES.append(mixnode)
+            msg = f'Added mixnode {mixnode} to watchlist'
+        else:
+            msg = f'Mixnode {mixnode} does not exist or API is not reachable'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
 
-async def print_jobs(context: ContextTypes.DEFAULT_TYPE):
-    for job in JOBS:
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=job)
+async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != const.CHAT_ID:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Unauthorized")
+
+    for mixnode in context.args:
+        try:
+            MIXNODES.remove(mixnode)
+            msg = f'Removed mixnode {mixnode}'
+            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        except Exception:
+            pass
+
+
+async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != const.CHAT_ID:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Unauthorized")
+
+    for gateway in context.args:
+        if mx_query.node_exists(gateway, 'gateway'):
+            GATEWAYS.append(gateway)
+            msg = f'Added gateway {gateway} to watchlist'
+        else:
+            msg = f'Gateway {gateway} does not exist or API is not reachable'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+
+
+async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != const.CHAT_ID:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Unauthorized")
+
+    for gateway in context.args:
+        try:
+            GATEWAYS.remove(gateway)
+            msg = f'Removed gateway {gateway}'
+            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        except Exception:
+            pass
+
+
+async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
+    for mixnode in MIXNODES:
+        score = mx_query.get_node_score(mixnode, 'mixnode')
+        if score < const.MIN_SCORE:
+            msg = f"""
+                Mixnode {mixnode} having issues, current routing score: {score}
+                \nExplorer: {const.MIXNODE_EXPLORER}{mixnode}
+                """
+            await context.bot.send_message(chat_id=const.CHAT_ID,
+                                           text=dedent(msg))
+
+    for gateway in GATEWAYS:
+        score = mx_query.get_node_score(gateway, 'gateway')
+        if score < const.MIN_SCORE:
+            msg = f"""
+                Gateway {gateway} having issues, current routing score: {score}
+                \nExplorer: {const.GATEWAY_EXPLORER}{gateway}
+                """
+            await context.bot.send_message(chat_id=const.CHAT_ID,
+                                           text=dedent(msg))
 
 if __name__ == '__main__':
     main()
