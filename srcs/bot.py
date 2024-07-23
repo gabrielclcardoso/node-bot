@@ -20,10 +20,14 @@ def main():
     application = Application.builder().token(const.TOKEN).build()
 
     add_mixnode_handler = CommandHandler('addmix', add_mixnode)
+    del_mixnode_handler = CommandHandler('delmix', del_mixnode)
     add_gateway_handler = CommandHandler('addgate', add_gateway)
+    del_gateway_handler = CommandHandler('delgate', del_gateway)
 
     application.add_handler(add_mixnode_handler)
+    application.add_handler(del_mixnode_handler)
     application.add_handler(add_gateway_handler)
+    application.add_handler(del_gateway_handler)
 
     job_queue = application.job_queue
     job_queue.run_repeating(report_nodes, interval=5)
@@ -45,6 +49,20 @@ async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
 
+async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != const.CHAT_ID:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Unauthorized")
+
+    for mixnode in context.args:
+        try:
+            MIXNODES.remove(mixnode)
+            msg = f'Removed mixnode {mixnode}'
+            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        except Exception:
+            pass
+
+
 async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != const.CHAT_ID:
         await context.bot.send_message(chat_id=update.effective_chat.id,
@@ -57,6 +75,20 @@ async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             msg = f'Gateway {gateway} does not exist or API is not reachable'
         await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+
+
+async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != const.CHAT_ID:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Unauthorized")
+
+    for gateway in context.args:
+        try:
+            GATEWAYS.remove(gateway)
+            msg = f'Removed gateway {gateway}'
+            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        except Exception:
+            pass
 
 
 async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
