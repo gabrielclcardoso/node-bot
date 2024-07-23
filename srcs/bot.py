@@ -3,6 +3,7 @@ from telegram.ext import Application, ContextTypes, CommandHandler
 import logging
 
 import constants as const
+import mixnet_query as mx_query
 
 
 logging.basicConfig(
@@ -17,7 +18,10 @@ def main():
     application = Application.builder().token(const.TOKEN).build()
 
     job_handler = CommandHandler('add', add_job)
+    mixnode_handler = CommandHandler('mixscore', mixnode_score)
+
     application.add_handler(job_handler)
+    application.add_handler(mixnode_handler)
 
     job_queue = application.job_queue
     job_queue.run_repeating(print_jobs, interval=5)
@@ -39,6 +43,16 @@ async def add_job(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def print_jobs(context: ContextTypes.DEFAULT_TYPE):
     for job in JOBS:
         await context.bot.send_message(chat_id=const.CHAT_ID, text=job)
+
+
+async def mixnode_score(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    for mixnode in context.args:
+        try:
+            score = mx_query.get_mixnode_score(mixnode)
+            await context.bot.send_message(chat_id=const.CHAT_ID, text=score)
+        except Exception as e:
+            msg = f'Error fetching score of mixnode {mixnode}:\n{e}'
+            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
 
 if __name__ == '__main__':
