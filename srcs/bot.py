@@ -1,3 +1,5 @@
 import telegram
 
-print("Bot Script")
+import constants as const
+
+print(const.TOKEN)
