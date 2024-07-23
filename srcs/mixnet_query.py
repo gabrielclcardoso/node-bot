@@ -28,3 +28,19 @@ def get_node_score(id, node_type):
         raise
 
     return json_response['last_day']
+
+
+def node_exists(id, node_type):
+    if node_type == "mixnode":
+        url = f'{const.MIXNODE_API}{id}/report'
+    else:
+        url = f'{const.GATEWAY_API}{id}/report'
+
+    try:
+        response = requests.get(url)
+    except Exception:
+        return False
+
+    if response.status_code != 200:
+        return False
+    return True
