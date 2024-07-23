@@ -4,8 +4,11 @@ import sys
 import constants as const
 
 
-def get_mixnode_score(id):
-    url = f'{const.MIXNODE_API}{id}/report'
+def get_node_score(id, node_type):
+    if node_type == "mixnode":
+        url = f'{const.MIXNODE_API}{id}/report'
+    else:
+        url = f'{const.GATEWAY_API}{id}/report'
 
     try:
         response = requests.get(url)
