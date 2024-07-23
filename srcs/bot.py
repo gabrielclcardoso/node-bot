@@ -11,22 +11,25 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-JOBS = []
+MIXNODES = []
+GATEWAYS = []
 
 
 def main():
     application = Application.builder().token(const.TOKEN).build()
 
-    job_handler = CommandHandler('add', add_job)
+    add_mixnode_handler = CommandHandler('addmix', add_mixnode)
+    add_gateway_handler = CommandHandler('addgate', add_gateway)
     mixnode_handler = CommandHandler('mixscore', mixnode_score)
     gateway_handler = CommandHandler('gatescore', gateway_score)
 
-    application.add_handler(job_handler)
+    application.add_handler(add_mixnode_handler)
+    application.add_handler(add_gateway_handler)
     application.add_handler(mixnode_handler)
     application.add_handler(gateway_handler)
 
     job_queue = application.job_queue
-    job_queue.run_repeating(print_jobs, interval=5)
+    job_queue.run_repeating(print_nodes, interval=5)
 
     application.run_polling()
 
@@ -51,20 +54,40 @@ async def mixnode_score(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
 
-async def add_job(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != const.CHAT_ID:
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Unauthorized")
 
-    for job in context.args:
-        JOBS.append(job)
-        await context.bot.send_message(chat_id=const.CHAT_ID,
-                                       text=f'added {job}')
+    for mixnode in context.args:
+        if mx_query.node_exists(mixnode, 'mixnode'):
+            MIXNODES.append(mixnode)
+            msg = f'Added mixnode {mixnode} to watchlist'
+        else:
+            msg = f'Mixnode {mixnode} does not exist or API is not reachable'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
 
-async def print_jobs(context: ContextTypes.DEFAULT_TYPE):
-    for job in JOBS:
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=job)
+async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_chat.id) != const.CHAT_ID:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Unauthorized")
+
+    for gateway in context.args:
+        if mx_query.node_exists(gateway, 'gateway'):
+            GATEWAYS.append(gateway)
+            msg = f'Added gateway {gateway} to watchlist'
+        else:
+            msg = f'Gateway {gateway} does not exist or API is not reachable'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+
+
+async def print_nodes(context: ContextTypes.DEFAULT_TYPE):
+    for mixnode in MIXNODES:
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=mixnode)
+
+    for gateway in GATEWAYS:
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=gateway)
 
 if __name__ == '__main__':
     main()
