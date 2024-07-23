@@ -5,7 +5,7 @@ import constants as const
 
 
 def get_mixnode_score(id):
-    url = f'{const.API}mix-node/{id}'
+    url = f'{const.MIXNODE_API}{id}/report'
 
     try:
         response = requests.get(url)
@@ -24,4 +24,4 @@ def get_mixnode_score(id):
         print(e, file=sys.stderr)
         raise
 
-    return json_response['avg_uptime']
+    return json_response['last_day']
