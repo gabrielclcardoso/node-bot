@@ -37,7 +37,7 @@ def main():
     application.add_handler(del_gateway_handler)
 
     job_queue = application.job_queue
-    job_queue.run_repeating(report_nodes, interval=5)
+    job_queue.run_repeating(report_nodes, interval=const.INTERVAL)
 
     application.run_polling()
 
