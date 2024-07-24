@@ -49,19 +49,14 @@ async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await tgu.send_message(context, "Unauthorized chat", id)
         return
 
-    for mixnode in context.args:
-        if mx_query.node_exists(mixnode, 'mixnode'):
-            MIXNODES.append(mixnode)
-            msg = f'Added mixnode {mixnode} to watchlist'
-        else:
-            msg = f'Mixnode {mixnode} does not exist or API is not reachable'
-        await tgu.send_message(context, msg)
+    updated = await increment_list(MIXNODES, context.args, 'mixnode', context)
 
-    try:
-        data.update_mixnodes(MIXNODES)
-    except Exception as e:
-        msg = f'Failed to update mixnodes file:\n\n{e}'
-        await tgu.send_message(context, msg)
+    if updated:
+        try:
+            data.update_mixnodes(MIXNODES)
+        except Exception as e:
+            msg = f'Failed to update mixnodes file:\n\n{e}'
+            await tgu.send_message(context, msg)
 
 
 async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -70,19 +65,14 @@ async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await tgu.send_message(context, "Unauthorized chat", id)
         return
 
-    for mixnode in context.args:
-        try:
-            MIXNODES.remove(mixnode)
-            msg = f'Removed mixnode {mixnode}'
-            await tgu.send_message(context, msg)
-        except Exception:
-            pass
+    updated = await reduce_list(MIXNODES, context.args, "mixnode", context)
 
-    try:
-        data.update_mixnodes(MIXNODES)
-    except Exception as e:
-        msg = f'Failed to update mixnodes file:\n\n{e}'
-        await tgu.send_message(context, msg)
+    if updated:
+        try:
+            data.update_mixnodes(MIXNODES)
+        except Exception as e:
+            msg = f'Failed to update mixnodes file:\n\n{e}'
+            await tgu.send_message(context, msg)
 
 
 async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -91,40 +81,30 @@ async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await tgu.send_message(context, "Unauthorized chat", id)
         return
 
-    for gateway in context.args:
-        if mx_query.node_exists(gateway, 'gateway'):
-            GATEWAYS.append(gateway)
-            msg = f'Added gateway {gateway} to watchlist'
-        else:
-            msg = f'Gateway {gateway} does not exist or API is not reachable'
-        await tgu.send_message(context, msg)
+    updated = await increment_list(GATEWAYS, context.args, 'gateway', context)
 
-    try:
-        data.update_gateways(GATEWAYS)
-    except Exception as e:
-        msg = f'Failed to update gateways file:\n\n{e}'
-        await tgu.send_message(context, msg)
+    if updated:
+        try:
+            data.update_gateways(GATEWAYS)
+        except Exception as e:
+            msg = f'Failed to update gateways file:\n\n{e}'
+            await tgu.send_message(context, msg)
 
 
-async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not tgu.authorized(update.effective_chat.id):
-        id = update.effective_chat.id
+async def del_gateway(updated: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not tgu.authorized(updated.effective_chat.id):
+        id = updated.effective_chat.id
         await tgu.send_message(context, "Unauthorized chat", id)
         return
 
-    for gateway in context.args:
-        try:
-            GATEWAYS.remove(gateway)
-            msg = f'Removed gateway {gateway}'
-            await tgu.send_message(context, msg)
-        except Exception:
-            pass
+    updated = await reduce_list(GATEWAYS, context.args, "gateway", context)
 
-    try:
-        data.update_gateways(GATEWAYS)
-    except Exception as e:
-        msg = f'Failed to update gateways file:\n\n{e}'
-        await tgu.send_message(context, msg)
+    if updated:
+        try:
+            data.update_gateways(GATEWAYS)
+        except Exception as e:
+            msg = f'Failed to update gateways file:\n\n{e}'
+            await tgu.send_message(context, msg)
 
 
 async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
@@ -145,6 +125,34 @@ async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
                 \nExplorer: {const.GATEWAY_EXPLORER}{gateway}
                 """
             await tgu.send_message(context, dedent(msg))
+
+
+async def increment_list(watchlist, nodes, node_type, context):
+    incremented = False
+    for node in nodes:
+        if mx_query.node_exists(node, node_type):
+            watchlist.append(node)
+            msg = f'Added {node_type} {node} to watchlist'
+            incremented = True
+        else:
+            msg = f'Error: {node_type} {
+                node} does not exist or API is not reachable'
+        await tgu.send_message(context, msg)
+    return incremented
+
+
+async def reduce_list(watchlist, nodes, node_type, context):
+    reduced = False
+    for node in nodes:
+        try:
+            watchlist.remove(node)
+            msg = f'Removed {node_type} {node}'
+            reduced = True
+            await tgu.send_message(context, msg)
+        except Exception:
+            pass
+    return reduced
+
 
 if __name__ == '__main__':
     main()
