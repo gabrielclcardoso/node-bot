@@ -5,6 +5,7 @@ from textwrap import dedent
 
 import constants as const
 import mixnet_query as mx_query
+import data
 
 
 logging.basicConfig(
@@ -12,8 +13,14 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-MIXNODES = []
-GATEWAYS = []
+try:
+    MIXNODES = data.load_mixnodes()
+except Exception:
+    MIXNODES = []
+try:
+    GATEWAYS = data.load_gateways()
+except Exception:
+    GATEWAYS = []
 
 
 def main():
@@ -48,6 +55,12 @@ async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = f'Mixnode {mixnode} does not exist or API is not reachable'
         await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
+    try:
+        data.update_mixnodes(MIXNODES)
+    except Exception as e:
+        msg = f'Failed to update mixnodes file:\n\n{e}'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+
 
 async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != const.CHAT_ID:
@@ -61,6 +74,12 @@ async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
         except Exception:
             pass
+
+    try:
+        data.update_mixnodes(MIXNODES)
+    except Exception as e:
+        msg = f'Failed to update mixnodes file:\n\n{e}'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
 
 async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -76,6 +95,12 @@ async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = f'Gateway {gateway} does not exist or API is not reachable'
         await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
+    try:
+        data.update_gateways(GATEWAYS)
+    except Exception as e:
+        msg = f'Failed to update gateways file:\n\n{e}'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+
 
 async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_chat.id) != const.CHAT_ID:
@@ -89,6 +114,12 @@ async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
         except Exception:
             pass
+
+    try:
+        data.update_gateways(GATEWAYS)
+    except Exception as e:
+        msg = f'Failed to update gateways file:\n\n{e}'
+        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
 
 
 async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
