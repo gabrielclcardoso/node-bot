@@ -6,6 +6,7 @@ from textwrap import dedent
 import constants as const
 import mixnet_query as mx_query
 import data
+import telegram_utils as tgu
 
 
 logging.basicConfig(
@@ -43,9 +44,10 @@ def main():
 
 
 async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_chat.id) != const.CHAT_ID:
+    if not tgu.authorized(update.effective_chat.id):
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Unauthorized")
+        return
 
     for mixnode in context.args:
         if mx_query.node_exists(mixnode, 'mixnode'):
@@ -63,9 +65,10 @@ async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_chat.id) != const.CHAT_ID:
+    if not tgu.authorized(update.effective_chat.id):
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Unauthorized")
+        return
 
     for mixnode in context.args:
         try:
@@ -83,9 +86,10 @@ async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_chat.id) != const.CHAT_ID:
+    if not tgu.authorized(update.effective_chat.id):
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Unauthorized")
+        return
 
     for gateway in context.args:
         if mx_query.node_exists(gateway, 'gateway'):
@@ -103,9 +107,10 @@ async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_chat.id) != const.CHAT_ID:
+    if not tgu.authorized(update.effective_chat.id):
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Unauthorized")
+        return
 
     for gateway in context.args:
         try:
