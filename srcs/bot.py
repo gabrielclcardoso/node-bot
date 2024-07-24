@@ -135,8 +135,7 @@ async def increment_list(watchlist, nodes, node_type, context):
             msg = f'Added {node_type} {node} to watchlist'
             incremented = True
         else:
-            msg = f'Error: {node_type} {
-                node} does not exist or API is not reachable'
+            msg = f'Error: {node_type} {node} 404 or API is not reachable'
         await tgu.send_message(context, msg)
     return incremented
 
