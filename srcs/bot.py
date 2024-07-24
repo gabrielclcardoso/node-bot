@@ -45,8 +45,8 @@ def main():
 
 async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not tgu.authorized(update.effective_chat.id):
-        await context.bot.send_message(chat_id=update.effective_chat.id,
-                                       text="Unauthorized")
+        id = update.effective_chat.id
+        await tgu.send_message(context, "Unauthorized chat", id)
         return
 
     for mixnode in context.args:
@@ -55,26 +55,26 @@ async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = f'Added mixnode {mixnode} to watchlist'
         else:
             msg = f'Mixnode {mixnode} does not exist or API is not reachable'
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        await tgu.send_message(context, msg)
 
     try:
         data.update_mixnodes(MIXNODES)
     except Exception as e:
         msg = f'Failed to update mixnodes file:\n\n{e}'
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        await tgu.send_message(context, msg)
 
 
 async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not tgu.authorized(update.effective_chat.id):
-        await context.bot.send_message(chat_id=update.effective_chat.id,
-                                       text="Unauthorized")
+        id = update.effective_chat.id
+        await tgu.send_message(context, "Unauthorized chat", id)
         return
 
     for mixnode in context.args:
         try:
             MIXNODES.remove(mixnode)
             msg = f'Removed mixnode {mixnode}'
-            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+            await tgu.send_message(context, msg)
         except Exception:
             pass
 
@@ -82,13 +82,13 @@ async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data.update_mixnodes(MIXNODES)
     except Exception as e:
         msg = f'Failed to update mixnodes file:\n\n{e}'
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        await tgu.send_message(context, msg)
 
 
 async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not tgu.authorized(update.effective_chat.id):
-        await context.bot.send_message(chat_id=update.effective_chat.id,
-                                       text="Unauthorized")
+        id = update.effective_chat.id
+        await tgu.send_message(context, "Unauthorized chat", id)
         return
 
     for gateway in context.args:
@@ -97,26 +97,26 @@ async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = f'Added gateway {gateway} to watchlist'
         else:
             msg = f'Gateway {gateway} does not exist or API is not reachable'
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        await tgu.send_message(context, msg)
 
     try:
         data.update_gateways(GATEWAYS)
     except Exception as e:
         msg = f'Failed to update gateways file:\n\n{e}'
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        await tgu.send_message(context, msg)
 
 
 async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not tgu.authorized(update.effective_chat.id):
-        await context.bot.send_message(chat_id=update.effective_chat.id,
-                                       text="Unauthorized")
+        id = update.effective_chat.id
+        await tgu.send_message(context, "Unauthorized chat", id)
         return
 
     for gateway in context.args:
         try:
             GATEWAYS.remove(gateway)
             msg = f'Removed gateway {gateway}'
-            await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+            await tgu.send_message(context, msg)
         except Exception:
             pass
 
@@ -124,7 +124,7 @@ async def del_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data.update_gateways(GATEWAYS)
     except Exception as e:
         msg = f'Failed to update gateways file:\n\n{e}'
-        await context.bot.send_message(chat_id=const.CHAT_ID, text=msg)
+        await tgu.send_message(context, msg)
 
 
 async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
@@ -135,8 +135,7 @@ async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
                 Mixnode {mixnode} having issues, current routing score: {score}
                 \nExplorer: {const.MIXNODE_EXPLORER}{mixnode}
                 """
-            await context.bot.send_message(chat_id=const.CHAT_ID,
-                                           text=dedent(msg))
+            await tgu.send_message(context, dedent(msg))
 
     for gateway in GATEWAYS:
         score = mx_query.get_node_score(gateway, 'gateway')
@@ -145,8 +144,7 @@ async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
                 Gateway {gateway} having issues, current routing score: {score}
                 \nExplorer: {const.GATEWAY_EXPLORER}{gateway}
                 """
-            await context.bot.send_message(chat_id=const.CHAT_ID,
-                                           text=dedent(msg))
+            await tgu.send_message(context, dedent(msg))
 
 if __name__ == '__main__':
     main()
