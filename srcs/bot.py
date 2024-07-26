@@ -109,7 +109,12 @@ async def del_gateway(updated: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
     for mixnode in MIXNODES:
-        score = mx_query.get_node_score(mixnode, 'mixnode')
+        try:
+            score = mx_query.get_node_score(mixnode, 'mixnode')
+        except Exception as e:
+            await tgu.send_message(context, f'Error: {e}')
+            continue
+
         if score < const.MIN_SCORE:
             msg = f"""
                 Mixnode {mixnode} having issues, current routing score: {score}
@@ -118,7 +123,11 @@ async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
             await tgu.send_message(context, dedent(msg))
 
     for gateway in GATEWAYS:
-        score = mx_query.get_node_score(gateway, 'gateway')
+        try:
+            score = mx_query.get_node_score(gateway, 'gateway')
+        except Exception as e:
+            await tgu.send_message(context, f'Error: {e}')
+            continue
         if score < const.MIN_SCORE:
             msg = f"""
                 Gateway {gateway} having issues, current routing score: {score}
