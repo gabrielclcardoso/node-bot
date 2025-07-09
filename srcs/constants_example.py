@@ -1,0 +1,6 @@
+CHAT_ID = ""
+DATA_PATH = ""
+API = "https://validator.nymtech.net/api/v1/nym-nodes/annotation/"
+TOKEN = ""
+MIN_SCORE = ""
+INTERVAL = ""

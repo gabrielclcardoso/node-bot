@@ -4,11 +4,8 @@ import sys
 import constants as const
 
 
-def get_node_score(id, node_type):
-    if node_type == "mixnode":
-        url = f'{const.MIXNODE_API}{id}/report'
-    else:
-        url = f'{const.GATEWAY_API}{id}/report'
+def get_node_score(id):
+    url = f'{const.API}{id}'
 
     try:
         response = requests.get(url)
@@ -27,14 +24,11 @@ def get_node_score(id, node_type):
         print(e, file=sys.stderr)
         raise
 
-    return json_response['last_day']
+    return json_response['annotation']['last_24h_performance']
 
 
-def node_exists(id, node_type):
-    if node_type == "mixnode":
-        url = f'{const.MIXNODE_API}{id}/report'
-    else:
-        url = f'{const.GATEWAY_API}{id}/report'
+def node_exists(id):
+    url = f'{const.API}{id}'
 
     try:
         response = requests.get(url)

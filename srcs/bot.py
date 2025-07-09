@@ -1,4 +1,3 @@
-from telegram import Update
 from telegram.ext import Application, ContextTypes, CommandHandler
 import logging
 from textwrap import dedent
@@ -7,6 +6,7 @@ import constants as const
 import mixnet_query as mx_query
 import data
 import telegram_utils as tgu
+import handlers as hndlrs
 
 
 logging.basicConfig(
@@ -15,27 +15,19 @@ logging.basicConfig(
 )
 
 try:
-    MIXNODES = data.load_mixnodes()
+    NODES = data.load_nodes()
 except Exception:
-    MIXNODES = []
-try:
-    GATEWAYS = data.load_gateways()
-except Exception:
-    GATEWAYS = []
+    NODES = set()
 
 
 def main():
     application = Application.builder().token(const.TOKEN).build()
 
-    add_mixnode_handler = CommandHandler('addmix', add_mixnode)
-    del_mixnode_handler = CommandHandler('delmix', del_mixnode)
-    add_gateway_handler = CommandHandler('addgate', add_gateway)
-    del_gateway_handler = CommandHandler('delgate', del_gateway)
+    add_handler = CommandHandler('addnode', hndlrs.add_node)
+    del_handler = CommandHandler('delnode', hndlrs.del_node)
 
-    application.add_handler(add_mixnode_handler)
-    application.add_handler(del_mixnode_handler)
-    application.add_handler(add_gateway_handler)
-    application.add_handler(del_gateway_handler)
+    application.add_handler(add_handler)
+    application.add_handler(del_handler)
 
     job_queue = application.job_queue
     job_queue.run_repeating(report_nodes, interval=const.INTERVAL)
@@ -43,123 +35,19 @@ def main():
     application.run_polling()
 
 
-async def add_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not tgu.authorized(update.effective_chat.id):
-        id = update.effective_chat.id
-        await tgu.send_message(context, "Unauthorized chat", id)
-        return
-
-    updated = await increment_list(MIXNODES, context.args, 'mixnode', context)
-
-    if updated:
-        try:
-            data.update_mixnodes(MIXNODES)
-        except Exception as e:
-            msg = f'Failed to update mixnodes file:\n\n{e}'
-            await tgu.send_message(context, msg)
-
-
-async def del_mixnode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not tgu.authorized(update.effective_chat.id):
-        id = update.effective_chat.id
-        await tgu.send_message(context, "Unauthorized chat", id)
-        return
-
-    updated = await reduce_list(MIXNODES, context.args, "mixnode", context)
-
-    if updated:
-        try:
-            data.update_mixnodes(MIXNODES)
-        except Exception as e:
-            msg = f'Failed to update mixnodes file:\n\n{e}'
-            await tgu.send_message(context, msg)
-
-
-async def add_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not tgu.authorized(update.effective_chat.id):
-        id = update.effective_chat.id
-        await tgu.send_message(context, "Unauthorized chat", id)
-        return
-
-    updated = await increment_list(GATEWAYS, context.args, 'gateway', context)
-
-    if updated:
-        try:
-            data.update_gateways(GATEWAYS)
-        except Exception as e:
-            msg = f'Failed to update gateways file:\n\n{e}'
-            await tgu.send_message(context, msg)
-
-
-async def del_gateway(updated: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not tgu.authorized(updated.effective_chat.id):
-        id = updated.effective_chat.id
-        await tgu.send_message(context, "Unauthorized chat", id)
-        return
-
-    updated = await reduce_list(GATEWAYS, context.args, "gateway", context)
-
-    if updated:
-        try:
-            data.update_gateways(GATEWAYS)
-        except Exception as e:
-            msg = f'Failed to update gateways file:\n\n{e}'
-            await tgu.send_message(context, msg)
-
-
 async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
-    for mixnode in MIXNODES:
+    for node in NODES:
         try:
-            score = mx_query.get_node_score(mixnode, 'mixnode')
+            score = mx_query.get_node_score(node)
         except Exception as e:
             await tgu.send_message(context, f'Error: {e}')
             continue
 
         if score < const.MIN_SCORE:
             msg = f"""
-                Mixnode {mixnode} having issues, current routing score: {score}
-                \nExplorer: {const.MIXNODE_EXPLORER}{mixnode}
+                Node {node} having issues, current routing score: {score}
                 """
             await tgu.send_message(context, dedent(msg))
-
-    for gateway in GATEWAYS:
-        try:
-            score = mx_query.get_node_score(gateway, 'gateway')
-        except Exception as e:
-            await tgu.send_message(context, f'Error: {e}')
-            continue
-        if score < const.MIN_SCORE:
-            msg = f"""
-                Gateway {gateway} having issues, current routing score: {score}
-                \nExplorer: {const.GATEWAY_EXPLORER}{gateway}
-                """
-            await tgu.send_message(context, dedent(msg))
-
-
-async def increment_list(watchlist, nodes, node_type, context):
-    incremented = False
-    for node in nodes:
-        if mx_query.node_exists(node, node_type):
-            watchlist.append(node)
-            msg = f'Added {node_type} {node} to watchlist'
-            incremented = True
-        else:
-            msg = f'Error: {node_type} {node} 404 or API is not reachable'
-        await tgu.send_message(context, msg)
-    return incremented
-
-
-async def reduce_list(watchlist, nodes, node_type, context):
-    reduced = False
-    for node in nodes:
-        try:
-            watchlist.remove(node)
-            msg = f'Removed {node_type} {node}'
-            reduced = True
-            await tgu.send_message(context, msg)
-        except Exception:
-            pass
-    return reduced
 
 
 if __name__ == '__main__':
