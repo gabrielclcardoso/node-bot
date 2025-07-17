@@ -1,6 +1,13 @@
-CHAT_ID = ""
-DATA_PATH = ""
-API = "https://validator.nymtech.net/api/v1/nym-nodes/annotation/"
+# Telegram Tokens
 TOKEN = ""
-MIN_SCORE = ""
-INTERVAL = ""
+CHAT_ID = ""
+
+# Local Paths
+DATA_PATH = "/"
+
+# URLs
+API = "https://validator.nymtech.net/api/v1/nym-nodes/annotation/"
+
+# Parameters
+MIN_SCORE = 0.95
+INTERVAL = 60 * 60

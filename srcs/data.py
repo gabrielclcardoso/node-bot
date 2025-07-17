@@ -2,13 +2,15 @@ import pickle
 
 import constants as const
 
+NODES = set()
 
-def load_gateways():
+
+def load_nodes():
     with open(f'{const.DATA_PATH}nodes.bin', 'rb') as f:
-        gateways = pickle.load(f)
-    return gateways
+        nodes = pickle.load(f)
+    return nodes
 
 
 def update_nodes(nodes):
-    with open(f'{const.DATA_PATH}gateways.bin', 'wb') as f:
+    with open(f'{const.DATA_PATH}nodes.bin', 'wb') as f:
         pickle.dump(nodes, f)

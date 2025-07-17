@@ -15,16 +15,16 @@ logging.basicConfig(
 )
 
 try:
-    NODES = data.load_nodes()
+    data.NODES = data.load_nodes()
 except Exception:
-    NODES = set()
+    pass
 
 
 def main():
     application = Application.builder().token(const.TOKEN).build()
 
-    add_handler = CommandHandler('addnode', hndlrs.add_node)
-    del_handler = CommandHandler('delnode', hndlrs.del_node)
+    add_handler = CommandHandler('add', hndlrs.add_node)
+    del_handler = CommandHandler('del', hndlrs.del_node)
 
     application.add_handler(add_handler)
     application.add_handler(del_handler)
@@ -36,7 +36,7 @@ def main():
 
 
 async def report_nodes(context: ContextTypes.DEFAULT_TYPE):
-    for node in NODES:
+    for node in data.NODES:
         try:
             score = mx_query.get_node_score(node)
         except Exception as e:

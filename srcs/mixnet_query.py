@@ -24,7 +24,7 @@ def get_node_score(id):
         print(e, file=sys.stderr)
         raise
 
-    return json_response['annotation']['last_24h_performance']
+    return float(json_response['annotation']['last_24h_performance'])
 
 
 def node_exists(id):
