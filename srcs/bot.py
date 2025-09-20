@@ -25,6 +25,7 @@ def main():
 
     add_handler = CommandHandler('add', hndlrs.add_node)
     del_handler = CommandHandler('del', hndlrs.del_node)
+    sat_handler = CommandHandler('saturation', hndlrs.get_sat)
 
     application.add_handler(add_handler)
     application.add_handler(del_handler)

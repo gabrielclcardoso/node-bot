@@ -62,3 +62,19 @@ async def reduce_set(watchlist: set, nodes: list, context):
         except Exception:
             pass
     return reduced
+
+
+async def get_sat(updated: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not tgu.authorized(updated.effective_chat.id):
+        id = updated.effective_chat.id
+        await tgu.send_message(context, "Unauthorized chat", id)
+        return
+
+    for node in data.NODES:
+        try:
+            sat = mx_query.get_node_saturation(node)
+            msg = f'Node {node} is {sat:.2f}% saturated'
+            await tgu.send_message(context, msg)
+        except Exception as e:
+            msg = f'Failed to get saturation for node {node}:\n\n{e}'
+            await tgu.send_message(context, msg)
