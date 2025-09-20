@@ -29,6 +29,7 @@ def main():
 
     application.add_handler(add_handler)
     application.add_handler(del_handler)
+    application.add_handler(sat_handler)
 
     job_queue = application.job_queue
     job_queue.run_repeating(report_nodes, interval=const.INTERVAL)

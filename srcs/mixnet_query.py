@@ -47,7 +47,7 @@ def get_node_saturation(id):
     for delegation in delegations:
         total_delegated += float(delegation['amount']['amount'])
 
-    return total_delegated / const.SATURATION
+    return (total_delegated / const.SATURATION) * 100
 
 
 def get_json_response(url) -> dict:
